@@ -125,6 +125,19 @@ area.innerHTML=html;renderBudget();
 }
 const barColors=["#729b87","#b4cbb8","#d6b991","#738d9a"];
 function stackedBar(r){const nums=[r.loss,r.expense,r.energy,r.interest],sum=nums.reduce((a,b)=>a+b,0);return '<div class="cs-chart" aria-label="'+t("chart")+'">'+nums.map((n,i)=>'<span style="width:'+(sum>0?100*n/sum:0)+'%;background:'+barColors[i]+'"></span>').join("")+'</div>';}
+function renderAssumptions(){
+const options=state.options.map((o,i)=>{
+const rows=[[t("price"),EUR(o.price)]];
+if(motor(state.cat)){rows.push([t("annual"),String(o.km)]);rows.push([t("cons"),String(o.cons)+" "+(o.method==="electric"?t("unitK"):t("unitL"))]);rows.push([t("fuelPrice"),EUR(o.unitPrice)]);}
+if(state.cat==="home")rows.push([t("residual"),EUR(o.resale)]);
+else if(state.cat!=="rental"&&state.cat!=="subscription")rows.push([t("deprec"),o.deprec+"%"]);
+rows.push([t("down"),EUR(o.down)]);
+if(o.price>o.down){rows.push([t("apr"),o.apr+"%"]);rows.push([t("term"),o.term+" "+t("month")]);}
+o.expenses.forEach(e=>rows.push([e.name,EUR(e.amount)+" · "+t(e.frequency)]));
+return '<div class="cs-option"><h3>'+esc(o.name)+'</h3>'+rows.map(r=>'<div class="cs-row"><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>').join("")+'</div>';
+}).join("");
+return '<div class="cs-panel"><h2>'+t("more")+' · '+t("resultsHint")+'</h2><div class="cs-four">'+options+'</div></div>';
+}
 function renderTimeline(){
 let data=state.options.map(o=>[0,1,2,3,4,5,6,7,8,9,10].slice(1,state.years+1).map(y=>calculate(o,y).total));
 const max=Math.max(1,...data.flat()),w=860,h=250,pad=35,plotW=w-pad*2,plotH=h-60;
