@@ -220,8 +220,8 @@ writePath(path,e.target);renderResults();
 });
 root.addEventListener("input",function(e){if(e.target.id==="cs-find")return;const path=e.target.dataset.path;if(!path)return;writePath(path,e.target);renderResults();});
 root.addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.id==="cs-find")applySearch();});
-function writePath(path,input){const parts=path.split(".");let target=state;for(let i=0;i<parts.length-1;i++)target=target[parts[i]];const key=parts[parts.length-1];target[key]=input.type==="number"?(input.value===""?NaN:Number(input.value)):input.value;
-if(parts[0]==="options"&&key==="price"){const o=state.options[Number(parts[1])];if(Number.isFinite(o.price)&&o.down>o.price)o.down=o.price;if(Number.isFinite(o.price)&&o.resale>o.price)o.resale=o.price;}
+function writePath(path,input){const parts=path.split(".");let target=state;for(let i=0;i<parts.length-1;i++)target=target[parts[i]];const key=parts[parts.length-1];const previous=target[key];target[key]=input.type==="number"?(input.value===""?NaN:Number(input.value)):input.value;
+if(parts[0]==="options"&&key==="price"){const o=state.options[Number(parts[1])];if(Number.isFinite(o.price)&&o.down===previous)o.down=o.price;else if(Number.isFinite(o.price)&&o.down>o.price)o.down=o.price;if(Number.isFinite(o.price)&&o.resale>o.price)o.resale=o.price;}
 if(parts[0]==="options"&&key==="method"){const o=state.options[Number(parts[1])];o.unitPrice=o.method==="electric"?.25:1.6;o.cons=o.method==="electric"?(state.cat==="escooter"?3:17):state.cat==="motorcycle"?4:6;renderOptions();}
 }
 const language=$("lang");language.addEventListener("change",()=>{locale=language.value;renderTop();});
