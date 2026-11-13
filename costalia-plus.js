@@ -68,7 +68,7 @@ const energy=motor(state.cat)?o.km*o.cons/100*o.unitPrice*years*factor:0;
 const residual=state.cat==="home"?o.resale:state.cat==="rental"||state.cat==="subscription"?0:o.price*Math.pow(1-Math.min(100,o.deprec*factor)/100,years);
 const loss=o.price-residual;
 const total=loss+expense+energy+interest;
-const cash=(expense+energy)/(12*years)+financing(o,years).payment;
+const cash=(expense-onetime+energy)/(12*years)+financing(o,years).payment;
 return {loss,expense,energy,interest,total,monthly:total/(years*12),cash,residual,recurring,onetime,payment:financing(o,years).payment};
 }
 function allResults(){return state.options.map(o=>calculate(o,state.years));}
