@@ -1,0 +1,59 @@
+/* Costalia Studio — enhanced calculator */
+#costaliaStudio{max-width:1150px;margin:0 auto 30px}
+#legacyCalc{display:none!important}
+.cs-panel{background:#fff;border:1px solid #dce8df;border-radius:20px;padding:23px;margin-bottom:17px;box-shadow:0 8px 26px #123a2908}
+.cs-top{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+.cs-top h2{margin:0;font-size:23px;letter-spacing:-.7px}
+.cs-sub{color:#647a70;font-size:13px;line-height:1.6;margin:9px 0}
+.cs-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.cs-field{min-width:0}.cs-field label{display:block;font-size:12px;font-weight:730;color:#4b6c60;margin-bottom:7px}
+.cs-field input,.cs-field select{width:100%;padding:10px 12px;border:1px solid #d6e3db;border-radius:11px;color:#1a3d33;min-height:44px;background:#fff;font:inherit}
+.cs-field input:focus,.cs-field select:focus{outline:2px solid #9ccfba;outline-offset:1px}
+.cs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.cs-four{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.cs-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.cs-controls button,.cs-mini{border-radius:11px}
+.cs-btn{background:#226654;color:white;border:0;padding:11px 17px;border-radius:11px;font-weight:720;cursor:pointer}
+.cs-btn.secondary{background:#ecf3ed;color:#295b4c}
+.cs-btn.danger{background:#fff3ee;color:#97513a}
+.cs-btn:disabled{opacity:.5;cursor:not-allowed}
+.cs-selected{background:#266a57!important;color:#fff!important}
+.cs-title{font-size:clamp(25px,3.4vw,36px);line-height:1.18;letter-spacing:-1px;margin:0 0 7px}
+.cs-tag{display:inline-block;font-size:11px;color:#31765f;background:#e6f2e9;border-radius:999px;padding:6px 12px;font-weight:700}
+.cs-option{border:1px solid #e2e9e3;border-radius:19px;background:#fff;padding:20px}
+.cs-option.winner{border:2px solid #4f9f7b}
+.cs-option-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 14px}
+.cs-option h3{margin:0;font-size:18px;color:#1b4035}
+.cs-stack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cs-stat{background:#eff6f0;border-radius:13px;padding:15px}
+.cs-stat b{display:block;color:#22634d;font-size:24px;letter-spacing:-.5px}
+.cs-stat span{color:#6c8276;font-size:12px}
+.cs-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #edf2ed;font-size:13px}
+.cs-chart{display:flex;height:12px;overflow:hidden;border-radius:20px;background:#e9efe9;margin:16px 0}
+.cs-chart span{min-width:0}
+.cs-timeline{overflow:auto;padding-bottom:5px}
+.cs-timeline svg{display:block;max-width:100%;height:auto}
+.cs-helper{background:#f1f6f1;padding:16px;border-radius:13px;font-size:13px;line-height:1.65;color:#496459}
+.cs-alert{background:#fff8e7;border:1px solid #eedcaa;border-radius:12px;padding:14px;color:#795d29}
+.cs-resultlead{padding:22px;background:linear-gradient(115deg,#1f5447,#2e7860);border-radius:17px;color:#fff;margin-bottom:18px}
+.cs-resultlead strong{font-size:22px;display:block;margin-top:5px;color:#d0f4df}
+.cs-breakdown{margin:12px 0 0}
+.cs-tabs{display:flex;flex-wrap:wrap;gap:8px}
+.cs-tab{background:#edf2ed!important;color:#355f4c!important}
+.cs-tab.active{background:#245f4b!important;color:#fff!important}
+.cs-expense{display:grid;grid-template-columns:2fr 1fr 1.2fr auto;gap:8px;align-items:end;margin-top:9px}
+.cs-expense input,.cs-expense select{width:100%;min-width:0}
+.cs-empty{font-size:13px;color:#778a80;font-style:italic}
+.cs-search{display:flex;align-items:center;gap:10px}
+.cs-search input{flex:1;min-width:0}
+.cs-section{margin-top:24px}
+.cs-section h2{font-size:24px;margin:0 0 15px}
+.cs-budget{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.cs-actions{display:flex;flex-wrap:wrap;gap:9px}
+.cs-actions button{flex:0 1 auto}
+.cs-table{width:100%;border-collapse:collapse;font-size:13px}
+.cs-table td,.cs-table th{text-align:left;border-bottom:1px solid #e7eee7;padding:11px;white-space:nowrap}
+.cs-table th{color:#486a59;font-size:12px}
+.cs-toast{font-size:13px;color:#276d56;min-height:19px}
+@media(max-width:750px){.cs-panel{padding:17px}.cs-grid,.cs-four{grid-template-columns:1fr}.cs-budget{grid-template-columns:1fr}.cs-expense{grid-template-columns:1fr 1fr}.cs-expense .cs-full{grid-column:span 2}.cs-actions button{flex:1 1 42%}.cs-top{align-items:flex-start}.cs-stack{grid-template-columns:1fr 1fr}}
+@media print{header,.hero,.site-footer,.help-section,#legacyCalc,.cs-edit,#cs-search-panel,#cs-budget-panel,#cs-saved-panel,.cs-actions{display:none!important}body{background:white!important}main{margin:0;padding:0}#costaliaStudio{width:100%;max-width:none}.cs-panel,.cs-option{box-shadow:none!important;break-inside:avoid;border-color:#b5c4b9}.cs-resultlead{color:#111;background:white;border:1px solid #ccc}.cs-resultlead strong{color:#111}}
