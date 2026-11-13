@@ -111,5 +111,5 @@ function refreshInfo(){const x=infoText[lang];for(const key of ["langCaption","h
 document.getElementById("guideSteps").innerHTML=x.steps.map((step,i)=>`<article class="guide-step"><span class="step-num">${i+1}</span><h3>${esc(step[0])}</h3><p>${esc(step[1])}</p></article>`).join("");
 document.getElementById("glossaryList").innerHTML=x.gloss.map(([name,desc])=>`<article class="gloss-item"><h3>${esc(name)}</h3><p>${esc(desc)}</p></article>`).join("");
 ["legalLink","privacyLink","cookiesLink"].forEach((id,i)=>{document.getElementById(id).href=["/aviso-legal.html","/privacidad.html","/cookies.html"][i]+"?lang="+lang});}
-const translateBeforeInfo=translate;translate=function(){translateBeforeInfo();refreshInfo()};refreshInfo();
+const translateBeforeInfo=translate;translate=function(){translateBeforeInfo();refreshInfo()};const requestedLang=new URLSearchParams(location.search).get("lang");if(["es","ca","en"].includes(requestedLang)&&!new URLSearchParams(location.search).has("state")&&!new URLSearchParams(location.search).has("general")){lang=requestedLang;document.getElementById("lang").value=lang;translate()}else{refreshInfo()}
 </script></body></html>
