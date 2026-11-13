@@ -57,3 +57,16 @@
 .cs-toast{font-size:13px;color:#276d56;min-height:19px}
 @media(max-width:750px){.cs-panel{padding:17px}.cs-grid,.cs-four{grid-template-columns:1fr}.cs-budget{grid-template-columns:1fr}.cs-expense{grid-template-columns:1fr 1fr}.cs-expense .cs-full{grid-column:span 2}.cs-actions button{flex:1 1 42%}.cs-top{align-items:flex-start}.cs-stack{grid-template-columns:1fr 1fr}}
 @media print{header,.hero,.site-footer,.help-section,#legacyCalc,.cs-edit,#cs-search-panel,#cs-budget-panel,#cs-saved-panel,.cs-actions{display:none!important}body{background:white!important}main{margin:0;padding:0}#costaliaStudio{width:100%;max-width:none}.cs-panel,.cs-option{box-shadow:none!important;break-inside:avoid;border-color:#b5c4b9}.cs-resultlead{color:#111;background:white;border:1px solid #ccc}.cs-resultlead strong{color:#111}}
+
+
+.cs-offer-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:16px}
+.cs-offer{background:#fafcf9;border:1px solid #dbe8df;border-radius:16px;padding:13px;display:flex;align-items:flex-start;gap:14px}
+.cs-offer img{width:95px;height:100px;object-fit:contain;background:white;border-radius:10px;flex-shrink:0}
+.cs-offer-info{min-width:0;flex:1}.cs-offer-info b{display:block;font-size:13px;line-height:1.4;color:#1e4d3e;overflow-wrap:anywhere}
+.cs-offer-info strong{font-size:22px;color:#1b684e;display:block;margin:9px 0 7px}
+.cs-offer-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.cs-offer-actions .cs-btn{padding:8px 10px;font-size:12px}
+.cs-offer-actions a{font-size:12px;color:#245e4e;font-weight:700;text-decoration:none}
+.cs-offer-actions a:hover{text-decoration:underline}
+@media(max-width:800px){.cs-offer-list{grid-template-columns:1fr}}
+@media(max-width:480px){.cs-offer{gap:9px;padding:10px}.cs-offer img{width:68px;height:80px}}
