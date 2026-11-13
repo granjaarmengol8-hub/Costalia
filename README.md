@@ -31,7 +31,8 @@ Coches, motos, bicicletas, patinetes eléctricos, compra y alquiler de vivienda,
 ## Estructura y publicación
 
 - `index.html`: portada, guía, glosario y soporte de idioma; contiene la calculadora original oculta como respaldo, no se presenta al visitante.
-- `costalia-plus.js`: motor activo de cálculo avanzado e interacción.
+- `costalia-plus.js`: motor activo de cálculo avanzado, búsqueda de productos e interacción.
+- `api/products.js`: proxy serverless seguro para Google Shopping / SerpAPI, con búsqueda bajo demanda, filtrado de accesorios y caché temporal.
 - `costalia-plus.css`: interfaz responsive y vista para impresión/PDF.
 - `aviso-legal.html`, `privacidad.html`, `cookies.html`: textos legales multilingües.
 - `favicon.svg`: identidad gráfica.
@@ -44,3 +45,19 @@ Coches, motos, bicicletas, patinetes eléctricos, compra y alquiler de vivienda,
 2. Comprobar la configuración real de alojamiento, logs, cookies y cualquier analítica externa.
 3. Probar visualmente en móvil y escritorio tras el despliegue, y revisar accesibilidad.
 4. Si se quieren precios reales por producto, integrar una fuente verificable con coste, límites y atribución adecuados.
+
+## Activar la búsqueda real en Vercel
+
+1. Abre Vercel → proyecto **Costalia** → **Settings → Environment Variables**.
+2. Añade la variable **SERPAPI_KEY** con tu clave personal de SerpAPI (nunca en GitHub ni en el navegador).
+3. Activa el entorno **Production** y los entornos de previsualización en los que quieras buscar.
+4. En **Deployments**, vuelve a desplegar la versión más reciente.
+5. Escribe «iPhone 16» en Costalia y pulsa **Buscar productos reales**. Las ofertas deberían incluir fuente y enlace, siempre que SerpAPI devuelva resultados compatibles.
+
+Las consultas consumen la cuota de SerpAPI de la clave configurada. La búsqueda se realiza **solo al pulsar el botón**, no por cada tecla; usa caché de 15 minutos por instancia y un límite básico por IP. Para tráfico alto o evitar abuso será necesario implementar controles y cuotas persistentes adicionales.
+
+No se usan fuentes externas para deducir consumo, reparaciones, seguro o valor futuro: estos datos se mantienen editables. La fuente de precios puede contener artículos similares, modelos distintos o costes de entrega incompletos. Cada resultado debe verificarse antes de usarlo y el usuario decide qué oferta seleccionar.
+
+## Privacidad de búsqueda
+
+Cuando se usa la búsqueda real, el texto introducido se envía al endpoint de Costalia y desde allí a SerpAPI para obtener ofertas. El proveedor de alojamiento y SerpAPI pueden tratar registros técnicos conforme a sus políticas. No introduzcas información personal sensible en el buscador. La política de privacidad debe reflejar este servicio.
