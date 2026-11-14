@@ -38,14 +38,14 @@ const t=k=>localized[locale][k]||k;
 const motor=cat=>motorCats.includes(cat);
 function fresh(cat,index){
 const price=initialPrices[cat]||0;
-return {name:names[locale][cats.indexOf(cat)]+" "+(index+1),price,method:cat==="escooter"?"electric":"petrol",km:cat==="car"?12000:cat==="motorcycle"?5000:cat==="escooter"?1200:0,cons:cat==="escooter"?3:cat==="motorcycle"?4:6,unitPrice:cat==="escooter"?.25:1.6,deprec:cat==="car"?10:cat==="motorcycle"?12:cat==="escooter"?18:15,resale:cat==="home"?price:0,down:price,apr:0,term:0,uses:12,expenses:(expenseDefaults[cat]||expenseDefaults.other).map(x=>({name:x[0],amount:x[1],frequency:x[2]})),needsPrice:false};
+return {name:names[locale][cats.indexOf(cat)]+" "+(index+1),price,method:cat==="escooter"?"electric":"petrol",km:cat==="car"?12000:cat==="motorcycle"?5000:cat==="escooter"?1200:0,cons:cat==="escooter"?3:cat==="motorcycle"?4:6,unitPrice:cat==="escooter"?.25:1.6,deprec:cat==="car"?10:cat==="motorcycle"?12:cat==="escooter"?18:15,resale:cat==="home"?price:0,down:price,apr:0,term:0,uses:12,expenses:(expenseDefaults[cat]||expenseDefaults.other).map(x=>({name:x[0],amount:x[1],frequency:x[2]})),needsPrice:false,extraShipping:0,extraTax:0,extraInstall:0,region:"es",manualSource:"",notes:""};
 }
 let state={cat:"car",years:5,scenario:"normal",mode:"quick",options:[fresh("car",0),fresh("car",1)],budget:{income:0,fixed:0,buffer:0}};
 state.options[1].price=15000;state.options[1].down=15000;state.options[1].cons=5;
 function validOption(o){
 const nums=["price","km","cons","unitPrice","deprec","resale","down","apr","term","uses"];
 if(nums.some(k=>!int(o[k],0,k==="term"?1200:k==="deprec"||k==="apr"?100:1000000000)))return false;
-if(o.down>o.price||o.resale>o.price||o.price>o.down&&o.term===0||o.needsPrice&&o.price<=0)return false;
+if(o.down>o.price||o.resale>o.price||o.price>o.down&&o.term===0||o.needsPrice&&o.price<=0||["extraShipping","extraTax","extraInstall"].some(k=>o[k]!==undefined&&!int(o[k],0,1e9)))return false;
 return Array.isArray(o.expenses)&&o.expenses.length<=100&&o.expenses.every(e=>typeof e.name==="string"&&e.name.length<=160&&int(e.amount,0,1e9)&&["once","year","month","use"].includes(e.frequency));
 }
 function validateState(a){return a&&cats.includes(a.cat)&&[3,5,10].includes(a.years)&&["normal","low","high"].includes(a.scenario)&&["quick","advanced"].includes(a.mode)&&Array.isArray(a.options)&&a.options.length>=1&&a.options.length<=4&&a.options.every(validOption)&&a.budget&&["income","fixed","buffer"].every(k=>int(a.budget[k],0,1e9));}
@@ -62,14 +62,15 @@ if(!validOption(o))throw Error("inputs");
 const factor={low:.85,normal:1,high:1.2}[state.scenario];
 const interest=financing(o,years).interest;
 const onetime=o.expenses.filter(e=>e.frequency==="once").reduce((a,e)=>a+e.amount,0);
-const recurring=o.expenses.filter(e=>e.frequency!=="once").map(e=>({name:e.name,value:e.amount*(e.frequency==="month"?12*years:e.frequency==="year"?years:o.uses*years)*factor}));
+const recurring=o.expenses.filter(e=>e.frequency!=="once").map(e=>({name:e.name,value:e.amount*(e.frequency==="month"?12*years:e.frequency==="year"?years:o.uses*years)*factor*(insightMultiplier.maint||1)}));
 const expense=onetime+recurring.reduce((a,e)=>a+e.value,0);
-const energy=motor(state.cat)?o.km*o.cons/100*o.unitPrice*years*factor:0;
+const energy=motor(state.cat)?o.km*(insightMultiplier.usage||1)*o.cons/100*o.unitPrice*(insightMultiplier.energy||1)*years*factor:0;
 const residual=state.cat==="home"?o.resale:state.cat==="rental"||state.cat==="subscription"?0:o.price*Math.pow(1-Math.min(100,o.deprec*factor)/100,years);
 const loss=o.price-residual;
-const total=loss+expense+energy+interest;
+const extra=Number(o.extraShipping||0)+Number(o.extraTax||0)+Number(o.extraInstall||0);if(!Number.isFinite(extra)||extra<0)throw Error("extra");
+const total=loss+expense+energy+interest+extra;
 const cash=(expense-onetime+energy)/(12*years)+financing(o,years).payment;
-return {loss,expense,energy,interest,total,monthly:total/(years*12),cash,residual,recurring,onetime,payment:financing(o,years).payment};
+return {loss,expense,energy,interest,extra,total,monthly:total/(years*12),cash,residual,recurring,onetime,payment:financing(o,years).payment};
 }
 function allResults(){return state.options.map(o=>calculate(o,state.years));}
 function field(label,path,value,opts){opts=opts||{};const isSelect=opts.options;let html='<div class="cs-field'+(opts.wide?' cs-full':'')+'"><label>'+esc(label)+'</label>';
@@ -85,9 +86,9 @@ $("cs-main").innerHTML='<div class="cs-panel cs-edit" id="cs-search-panel"><h2 c
 '<div class="cs-panel cs-edit"><div class="cs-top"><div><h2>'+t("options")+'</h2><p class="cs-sub">'+t("example")+'</p></div><button class="cs-btn secondary" data-action="add" '+(state.options.length>=4?'disabled':'')+'>'+t("addOption")+' ('+state.options.length+'/4)</button></div><div class="cs-grid" id="cs-option-forms"></div></div>'+
 '<div class="cs-panel cs-edit"><div class="cs-actions"><button class="cs-btn" data-action="recalc">'+t("estimate")+'</button><button class="cs-btn secondary" data-action="reset">'+t("restore")+'</button><a href="#guide" class="cs-btn secondary" style="text-decoration:none">'+t("openGuide")+'</a></div></div>'+
 '<section class="cs-section" id="cs-results"></section>'+
-'<div class="cs-panel cs-edit" id="cs-budget-panel"><h2>'+t("budget")+'</h2><p class="cs-sub">'+t("budgetExplain")+'</p><div class="cs-budget">'+["income","fixed","buffer"].map(k=>field(t(k),"budget."+k,state.budget[k])).join("")+'</div><div id="cs-budget-result" class="cs-helper" style="margin-top:16px"></div></div>'+
+'<div id="cs-insights"></div><div class="cs-panel cs-edit" id="cs-budget-panel"><h2>'+t("budget")+'</h2><p class="cs-sub">'+t("budgetExplain")+'</p><div class="cs-budget">'+["income","fixed","buffer"].map(k=>field(t(k),"budget."+k,state.budget[k])).join("")+'</div><div id="cs-budget-result" class="cs-helper" style="margin-top:16px"></div></div>'+
 '<div class="cs-panel cs-edit" id="cs-saved-panel"><div class="cs-top"><div><h2>'+t("saved")+'</h2><p class="cs-sub">'+t("savedHint")+'</p></div><button class="cs-btn secondary" data-action="save">'+t("save")+'</button></div><div id="cs-saved-list"></div></div>';
-renderOptions();renderResults();renderSaved();
+renderOptions();renderResults();renderSaved();renderInsight();
 }
 function renderOptions(){
 const box=$("cs-option-forms");if(!box)return;
@@ -111,7 +112,7 @@ content+='</div><div class="cs-section"><div class="cs-top"><b>'+t("extras")+'</
 const expenses=state.mode==="quick"?o.expenses.slice(0,2):o.expenses;
 content+=expenses.map((e,j)=>'<div class="cs-expense">'+field(t("lineItem"),"options."+i+".expenses."+j+".name",e.name,{type:"text"})+field(t("value"),"options."+i+".expenses."+j+".amount",e.amount)+field(t("frequency"),"options."+i+".expenses."+j+".frequency",e.frequency,{options:["once","month","year","use"].map(k=>[k,t(k)])})+'<button class="cs-btn danger" aria-label="'+t("remove")+'" data-action="removeExpense" data-value="'+i+":"+j+'">×</button></div>').join("");
 if(state.mode==="quick"&&o.expenses.length>2)content+='<p class="cs-sub">+'+(o.expenses.length-2)+' · '+t("quickHint")+'</p>';content+='</div></div>';return content;
-}).join("");
+}).join("");renderOptionExtras();
 }
 function renderResults(){
 const area=$("cs-results");if(!area)return;
@@ -122,10 +123,10 @@ html+='<div class="cs-four">'+data.map((r,i)=>'<article class="cs-option '+(i===
 html+='<div class="cs-panel"><h2>'+t("yearly")+'</h2>'+renderTimeline()+'<h3>'+t("breakEven")+'</h3><p class="cs-sub">'+breakEven()+'</p><p class="cs-sub">'+t("note")+'</p></div>';
 html+=renderAssumptions();
 html+='<div class="cs-panel cs-edit"><div class="cs-actions"><button class="cs-btn" data-action="print">'+t("print")+'</button><button class="cs-btn secondary" data-action="share">'+t("share")+'</button><button class="cs-btn secondary" data-action="visual">'+t("image")+'</button><button class="cs-btn secondary" data-action="copy">'+t("copy")+'</button></div><p class="cs-toast" id="cs-action-note"></p></div>';
-area.innerHTML=html;renderBudget();
+area.innerHTML=html;renderBudget();const advice=$("ci-advice");if(advice)advice.innerHTML=insightAdvice();
 }
 const barColors=["#729b87","#b4cbb8","#d6b991","#738d9a"];
-function stackedBar(r){const nums=[r.loss,r.expense,r.energy,r.interest],sum=nums.reduce((a,b)=>a+b,0);return '<div class="cs-chart" aria-label="'+t("chart")+'">'+nums.map((n,i)=>'<span style="width:'+(sum>0?100*n/sum:0)+'%;background:'+barColors[i]+'"></span>').join("")+'</div>';}
+function stackedBar(r){const nums=[r.loss,r.expense+r.extra,r.energy,r.interest],sum=nums.reduce((a,b)=>a+b,0);return '<div class="cs-chart" aria-label="'+t("chart")+'">'+nums.map((n,i)=>'<span style="width:'+(sum>0?100*n/sum:0)+'%;background:'+barColors[i]+'"></span>').join("")+'</div>';}
 function renderAssumptions(){
 const options=state.options.map((o,i)=>{
 const rows=[[t("price"),EUR(o.price)]];
@@ -202,7 +203,7 @@ finally{liveSearchBusy=false;}
 function chooseOffer(i){
 const offer=liveOffers[Number(i)];if(!offer||!Number.isFinite(offer.price)||offer.price<=0)return;
 const o=state.options[0];o.name=offer.title;o.price=offer.price;o.down=offer.price;o.needsPrice=false;
-o.resale=state.cat==="home"?offer.price:0;
+o.resale=state.cat==="home"?offer.price:0;o.manualSource=offer.url||"";o.offerSource=offer.source||"";
 renderOptions();renderResults();
 const node=$("cs-search-message");if(node)node.textContent=t("priceWarning");
 }
@@ -246,13 +247,13 @@ if(action==="save"){const name=prompt(t("namePrompt"),names[locale][cats.indexOf
 if(action==="load"){const saved=getSaved()[Number(value)];if(saved){state=clone(saved.state);renderTop();$("cs-main").scrollIntoView({behavior:"smooth"})}return;}
 if(action==="delete"){const items=getSaved();items.splice(Number(value),1);putSaved(items);return renderSaved();}
 }
-root.addEventListener("click",function(e){const btn=e.target.closest("[data-action]");if(!btn||!root.contains(btn))return;perform(btn.dataset.action,btn.dataset.value);});
+root.addEventListener("click",function(e){if(e.target.closest("[data-insight-action]"))return insightClick(e);const btn=e.target.closest("[data-action]");if(!btn||!root.contains(btn))return;perform(btn.dataset.action,btn.dataset.value);});
 root.addEventListener("change",function(e){const path=e.target.dataset.path;if(!path)return;
 if(path==="cat"){state.cat=e.target.value;state.options=[fresh(state.cat,0),fresh(state.cat,1)];renderTop();return;}
 if(path==="mode"){state.mode=e.target.value;renderTop();return;}
 writePath(path,e.target);renderResults();
 });
-root.addEventListener("input",function(e){if(e.target.id==="cs-find")return;const path=e.target.dataset.path;if(!path)return;writePath(path,e.target);renderResults();});
+root.addEventListener("input",function(e){if(e.target.dataset.insightSlider){const k=e.target.dataset.insightSlider;insightMultiplier[k]=1+Number(e.target.value)/100;const out=$("ci-output-"+k);if(out)out.textContent=e.target.value+"%";renderResults();return;}if(e.target.id==="cs-find")return;const path=e.target.dataset.path;if(!path)return;writePath(path,e.target);renderResults();});
 root.addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.id==="cs-find")applySearch();});
 function writePath(path,input){const parts=path.split(".");let target=state;for(let i=0;i<parts.length-1;i++)target=target[parts[i]];const key=parts[parts.length-1];const previous=target[key];target[key]=input.type==="number"?(input.value===""?NaN:Number(input.value)):input.value;
 if(parts[0]==="options"&&key==="price"){const o=state.options[Number(parts[1])];if(Number.isFinite(o.price)&&o.price>0)o.needsPrice=false;if(Number.isFinite(o.price)&&o.down===previous)o.down=o.price;else if(Number.isFinite(o.price)&&o.down>o.price)o.down=o.price;if(Number.isFinite(o.price)&&o.resale>o.price)o.resale=o.price;}
@@ -260,5 +261,83 @@ if(parts[0]==="options"&&key==="method"){const o=state.options[Number(parts[1])]
 }
 const language=$("lang");language.addEventListener("change",()=>{locale=language.value;renderTop();});
 try{const u=new URL(location.href).searchParams.get("v2");if(u){const parsed=JSON.parse(u);if(validateState(parsed))state=parsed;}}catch(e){}
+
+/* Costalia Insights: all values are explicit inputs; no fabricated model data. */
+const insightWords={
+es:{title:"Compra con más información",shipping:"Envío (€)",tax:"Impuestos o tasas adicionales (€)",installation:"Instalación / gestión (€)",unknown:"Si no conoces un importe, déjalo en 0 y trátalo como no verificado.",source:"Fuente técnica opcional (URL)",region:"Región para ajustar manualmente los costes",repair:"Planificación de mantenimiento y riesgos",repairText:"Los intervalos y costes dependen del producto, fabricante y uso. Estos avisos son una lista de comprobación, NO recomendaciones técnicas verificadas para el modelo.",change:"¿Qué pasa si…?",energy:"Variación del precio de energía",usage:"Variación del uso",maint:"Variación de mantenimiento",adjust:"Calcular con estos supuestos",reset:"Restaurar supuestos",advice:"¿Es una buena compra?",adviceHint:"Comparación relativa entre tus alternativas. No es una tasación de mercado.",local:"Ubicación e impuestos",locationHint:"Selecciona la zona solo como referencia; no aplicamos automáticamente impuestos locales no verificados.",watch:"Vigilar un precio",watchHelp:"Guarda un producto y comprueba manualmente si aparece una oferta más barata. No enviamos notificaciones ni comprobamos precios en segundo plano.",query:"Nombre exacto del producto",threshold:"Precio objetivo (€)",watchSave:"Guardar seguimiento",check:"Comprobar ahora",watchList:"Mis seguimientos",noWatch:"No hay seguimientos todavía.",diary:"Experiencias de propietarios",diaryHelp:"Registro personal de gastos reales en este dispositivo. No publicamos reseñas de otros propietarios sin moderación.",cost:"Coste real pagado (€)",description:"Reparación o mantenimiento realizado",addLog:"Guardar experiencia",assistant:"Explícame el resultado",question:"¿Qué quieres saber?",ask:"Explicar",assistHint:"Explicación automática basada exclusivamente en las cifras de tu simulación, sin IA externa.",offer:"Verificar enlace de anuncio",offerHelp:"Pega el enlace de un anuncio para extraer palabras del título, cuando la URL lo permita. No leemos la web externa ni suponemos el precio.",photo:"Foto de referencia",photoHelp:"Puedes adjuntar una fotografía como referencia local; identificar el modelo por imagen requiere un servicio de visión que aún no está conectado.",notKnown:"Dato no verificado",feedback:"¿Qué te falta en Costalia?",feedbackHelp:"Puedes escribir una sugerencia y copiarla. No se envía automáticamente a los creadores.",copyFeedback:"Copiar sugerencia",summary:"El coste menor en tu comparación es",difference:"Diferencia respecto a la opción más cara",percent:"El coste de uso y energía representa",why:"La mayor partida de la opción seleccionada es",budget:"Estas recomendaciones no sustituyen un presupuesto profesional.",saved:"Guardado localmente.",empty:"Introduce una descripción.",help:"Ayuda"},
+ca:{title:"Compra amb més informació",shipping:"Enviament (€)",tax:"Impostos o taxes addicionals (€)",installation:"Instal·lació / gestió (€)",unknown:"Si no coneixes un import, deixa'l a 0 i considera'l no verificat.",source:"Font tècnica opcional (URL)",region:"Regió per ajustar els costos manualment",repair:"Planificació de manteniment i riscos",repairText:"Els intervals i costos depenen del producte, fabricant i ús. Els avisos són una llista de comprovació, NO recomanacions tècniques verificades per al model.",change:"Què passa si...?",energy:"Variació del preu de l'energia",usage:"Variació de l'ús",maint:"Variació del manteniment",adjust:"Calcula amb aquests supòsits",reset:"Restaura supòsits",advice:"És una bona compra?",adviceHint:"Comparació relativa entre alternatives. No és una taxació de mercat.",local:"Ubicació i impostos",locationHint:"La zona és una referència; no apliquem automàticament impostos locals no verificats.",watch:"Segueix un preu",watchHelp:"Desa un producte i comprova manualment si hi ha ofertes més barates. No enviem notificacions ni fem comprovacions en segon pla.",query:"Nom exacte del producte",threshold:"Preu objectiu (€)",watchSave:"Desa seguiment",check:"Comprova ara",watchList:"Els meus seguiments",noWatch:"Encara no hi ha seguiments.",diary:"Experiències de propietaris",diaryHelp:"Registre personal de despeses reals en aquest dispositiu. No publiquem opinions d'altres propietaris sense moderació.",cost:"Cost real pagat (€)",description:"Reparació o manteniment realitzat",addLog:"Desa experiència",assistant:"Explica'm el resultat",question:"Què vols saber?",ask:"Explica",assistHint:"Explicació automàtica basada només en les dades de la simulació, sense IA externa.",offer:"Comprova l'enllaç d'un anunci",offerHelp:"Enganxa l'enllaç d'un anunci per extreure paraules del títol quan la URL ho permeti. No llegim el web extern ni suposem el preu.",photo:"Foto de referència",photoHelp:"Pots afegir una fotografia de referència local; identificar un model per imatge requereix un servei de visió que encara no està connectat.",notKnown:"Dada no verificada",feedback:"Què falta a Costalia?",feedbackHelp:"Escriu un suggeriment i copia'l. No s'envia automàticament als creadors.",copyFeedback:"Copia suggeriment",summary:"El cost menor en la comparació és",difference:"Diferència respecte a l'opció més cara",percent:"El cost d'ús i energia representa",why:"La partida més gran de l'opció seleccionada és",budget:"Aquestes orientacions no substitueixen un pressupost professional.",saved:"Desat localment.",empty:"Introdueix una descripció.",help:"Ajuda"},
+en:{title:"Buy with more context",shipping:"Shipping (€)",tax:"Additional taxes or fees (€)",installation:"Installation / handling (€)",unknown:"Unknown costs can be left at 0, but must be treated as unverified.",source:"Optional technical source (URL)",region:"Region for manually adjusting costs",repair:"Maintenance and risk checklist",repairText:"Intervals and costs depend on manufacturer and usage. These prompts are NOT verified maintenance instructions for this model.",change:"What if…?",energy:"Energy-price change",usage:"Usage change",maint:"Maintenance-cost change",adjust:"Calculate with these assumptions",reset:"Reset assumptions",advice:"Is this a good purchase?",adviceHint:"Relative comparison between your options, not a market valuation.",local:"Location and taxes",locationHint:"Region is only a reference; local taxes are not automatically estimated without reliable data.",watch:"Track a price",watchHelp:"Save a product and manually check whether a lower offer appears. No background checks or notifications.",query:"Exact product name",threshold:"Target price (€)",watchSave:"Save watch",check:"Check now",watchList:"My price watches",noWatch:"No watches saved.",diary:"Owner experiences",diaryHelp:"Your own real expense log on this device. No public owner reviews without moderation.",cost:"Actual expense (€)",description:"Repair or maintenance performed",addLog:"Save experience",assistant:"Explain my results",question:"What would you like to know?",ask:"Explain",assistHint:"Rule-based explanations from your simulation only; no external AI.",offer:"Use a listing link",offerHelp:"Paste a listing URL to infer search words when the address permits. We do not read external page content or guess its price.",photo:"Reference photo",photoHelp:"Attach a local reference image. Image model recognition would require a vision service not yet connected.",notKnown:"Unverified input",feedback:"What is Costalia missing?",feedbackHelp:"Write and copy a suggestion. It is not automatically sent to the creators.",copyFeedback:"Copy suggestion",summary:"The lowest cost in your comparison is",difference:"Difference from the most expensive option",percent:"Running and energy costs account for",why:"The largest component for the selected option is",budget:"This is not a substitute for a professional quote.",saved:"Saved locally.",empty:"Enter a description.",help:"Help"}}
+;
+let insightMultiplier={energy:1,usage:1,maint:1};
+let insightWatches=[],insightDiary=[];
+try{insightWatches=JSON.parse(localStorage.getItem("costalia.watches.v1")||"[]");if(!Array.isArray(insightWatches))insightWatches=[];}catch(e){insightWatches=[]}
+try{insightDiary=JSON.parse(localStorage.getItem("costalia.diary.v1")||"[]");if(!Array.isArray(insightDiary))insightDiary=[];}catch(e){insightDiary=[]}
+const I=k=>insightWords[locale][k]||k;
+const insightStore=(key,val)=>{try{localStorage.setItem(key,JSON.stringify(val));return true}catch(e){return false}};
+const additionalInput=(label,path,value)=>'<div class="cs-field"><label>'+esc(label)+'</label><input type="number" min="0" step="any" data-path="'+path+'" value="'+esc(value||0)+'"></div>';
+function renderOptionExtras(){
+const forms=$("cs-option-forms");if(!forms)return;
+const panels=forms.querySelectorAll(".cs-option");panels.forEach((panel,i)=>{
+const o=state.options[i],wrap=document.createElement("details");wrap.className="ci-option-extra";wrap.innerHTML='<summary>'+esc(I("title"))+'</summary><p class="cs-sub">'+I("unknown")+'</p><div class="cs-fields">'+
+additionalInput(I("shipping"),"options."+i+".extraShipping",o.extraShipping)+additionalInput(I("tax"),"options."+i+".extraTax",o.extraTax)+additionalInput(I("installation"),"options."+i+".extraInstall",o.extraInstall)+
+'<div class="cs-field"><label>'+I("region")+'</label><select data-path="options.'+i+'.region"><option value="es">España</option><option value="eu">Europa</option><option value="other">Otra zona / Other</option></select></div>'+
+'<div class="cs-field"><label>'+I("source")+'</label><input data-path="options.'+i+'.manualSource" type="url" value="'+esc(o.manualSource||"")+'" placeholder="https://"></div></div>';
+panel.appendChild(wrap);const sel=wrap.querySelector("select");if(sel)sel.value=o.region||"es";
+});
+}
+function repairChecklist(){
+const category=state.cat;
+const categories={
+car:["Comprobar historial de mantenimiento, ITV y kilometraje.","Consultar el plan de revisiones del fabricante para versión y motor.","Preguntar por neumáticos, frenos y reparaciones pendientes."],
+motorcycle:["Revisar neumáticos, frenos, cadena y kilometraje.","Consultar intervalos de revisiones del fabricante."],
+phone:["Comprobar estado y garantía de batería.","Revisar la cobertura de reparaciones y actualizaciones."],
+appliance:["Revisar garantía, instalación y eficiencia energética.","Comprobar disponibilidad de repuestos."],
+home:["Revisar comunidad, impuestos, derramas y certificación energética.","Solicitar inspección técnica si procede."]
+};
+const a=categories[category]||["Comprobar garantía, mantenimiento, consumibles y reparaciones previsibles.","Verificar condiciones e instrucciones del fabricante."];
+return '<section class="ci-section"><h3>'+I("repair")+'</h3><p class="cs-sub">'+I("repairText")+'</p><ul>'+a.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul></section>';
+}
+function insightAdvice(){
+let results;try{results=allResults()}catch(e){return '<p class="cs-alert">'+t("warn")+'</p>'}
+const low=Math.min(...results.map(x=>x.total)),high=Math.max(...results.map(x=>x.total));
+const idx=results.findIndex(x=>x.total===low),o=state.options[idx],r=results[idx],pct=r.total>0?Math.round(100*(r.expense+r.energy)/r.total):0;
+const components=[[I("shipping"),r.extra],[t("loss"),r.loss],[t("running"),r.expense+r.energy],[t("interest"),r.interest]].sort((a,b)=>b[1]-a[1]);
+return '<p><b>'+I("summary")+': '+esc(o.name)+'</b> ('+EUR(low)+'). '+I("difference")+': '+EUR(high-low)+'.</p><p>'+I("percent")+': '+pct+'%. '+I("why")+': '+components[0][0]+' ('+EUR(components[0][1])+').</p><p class="cs-sub">'+I("adviceHint")+'</p>';
+}
+function renderInsight(){
+const target=$("cs-insights");if(!target)return;
+target.innerHTML='<div class="ci-panel"><h2>'+I("title")+'</h2><p class="cs-sub">'+I("unknown")+'</p><div class="ci-columns"><div class="ci-section"><h3>'+I("change")+'</h3>'+
+["energy","usage","maint"].map(k=>'<label class="ci-slider">'+I(k)+' <output id="ci-output-'+k+'">'+Math.round((insightMultiplier[k]-1)*100)+'%</output><input data-insight-slider="'+k+'" type="range" min="-50" max="100" step="5" value="'+Math.round((insightMultiplier[k]-1)*100)+'"></label>').join("")+
+'<button class="cs-btn secondary" data-insight-action="resetWhatIf">'+I("reset")+'</button></div>'+
+'<div class="ci-section"><h3>'+I("advice")+'</h3><div id="ci-advice">'+insightAdvice()+'</div></div></div>'+repairChecklist()+
+'<div class="ci-columns"><section class="ci-section"><h3>'+I("watch")+'</h3><p class="cs-sub">'+I("watchHelp")+'</p><input id="ci-watch-query" placeholder="'+I("query")+'"><input id="ci-watch-target" type="number" min="0" step="any" placeholder="'+I("threshold")+'"><button class="cs-btn" data-insight-action="saveWatch">'+I("watchSave")+'</button><div id="ci-watch-list"></div></section>'+
+'<section class="ci-section"><h3>'+I("diary")+'</h3><p class="cs-sub">'+I("diaryHelp")+'</p><input id="ci-diary-description" maxlength="140" placeholder="'+I("description")+'"><input id="ci-diary-cost" type="number" min="0" step="any" placeholder="'+I("cost")+'"><button class="cs-btn" data-insight-action="addDiary">'+I("addLog")+'</button><div id="ci-diary-list"></div></section></div>'+
+'<div class="ci-columns"><section class="ci-section"><h3>'+I("offer")+'</h3><p class="cs-sub">'+I("offerHelp")+'</p><input type="url" id="ci-url" placeholder="https://..."><button class="cs-btn secondary" data-insight-action="listing">'+t("searchBtn")+'</button><h3>'+I("photo")+'</h3><p class="cs-sub">'+I("photoHelp")+'</p><input type="file" id="ci-photo" accept="image/*"></section>'+
+'<section class="ci-section"><h3>'+I("assistant")+'</h3><p class="cs-sub">'+I("assistHint")+'</p><select id="ci-question"><option value="why">'+I("why")+'</option><option value="cost">'+I("percent")+'</option><option value="compare">'+I("difference")+'</option></select><button class="cs-btn secondary" data-insight-action="explain">'+I("ask")+'</button><p id="ci-answer"></p><h3>'+I("feedback")+'</h3><p class="cs-sub">'+I("feedbackHelp")+'</p><textarea id="ci-feedback" maxlength="1200" rows="3"></textarea><button class="cs-btn secondary" data-insight-action="feedback">'+I("copyFeedback")+'</button></section></div><p id="ci-status" class="cs-toast" aria-live="polite"></p></div>';
+renderWatchList();renderDiary();
+}
+function renderWatchList(){
+const box=$("ci-watch-list");if(!box)return;
+box.innerHTML=insightWatches.length?insightWatches.slice(0,15).map((w,i)=>'<div class="ci-row"><span>'+esc(w.q)+' · '+EUR(w.target)+' '+(w.last?(' · '+EUR(w.last)):'')+'</span><button class="cs-btn secondary" data-insight-action="checkWatch" data-index="'+i+'">'+I("check")+'</button><button class="cs-btn danger" data-insight-action="deleteWatch" data-index="'+i+'">×</button></div>').join(""):'<p class="cs-sub">'+I("noWatch")+'</p>';
+}
+function renderDiary(){
+const box=$("ci-diary-list");if(!box)return;
+box.innerHTML=insightDiary.length?insightDiary.slice(0,30).map((x,i)=>'<div class="ci-row"><span>'+esc(x.description)+' · '+EUR(x.amount)+'</span><button class="cs-btn danger" data-insight-action="deleteDiary" data-index="'+i+'">×</button></div>').join(""):'';
+}
+function ciStatus(s){const el=$("ci-status");if(el)el.textContent=s}
+async function insightClick(e){
+const b=e.target.closest("[data-insight-action]");if(!b)return;
+const action=b.dataset.insightAction,idx=Number(b.dataset.index);
+if(action==="resetWhatIf"){insightMultiplier={energy:1,usage:1,maint:1};renderTop();return;}
+if(action==="saveWatch"){const q=$("ci-watch-query").value.trim(),target=Number($("ci-watch-target").value);if(!q||q.length>90||!Number.isFinite(target)||target<=0)return ciStatus(I("empty"));insightWatches.unshift({q:q.slice(0,90),target,last:0});insightWatches=insightWatches.slice(0,15);insightStore("costalia.watches.v1",insightWatches);renderWatchList();return ciStatus(I("saved"));}
+if(action==="deleteWatch"){insightWatches.splice(idx,1);insightStore("costalia.watches.v1",insightWatches);return renderWatchList();}
+if(action==="checkWatch"){const watch=insightWatches[idx];if(!watch)return;ciStatus(t("loading"));try{const response=await fetch("/api/products?q="+encodeURIComponent(watch.q));const data=await response.json();if(!response.ok)throw Error(data.error);const prices=(data.products||[]).map(x=>x.price).filter(x=>Number.isFinite(x)&&x>0);watch.last=prices.length?Math.min(...prices):0;insightStore("costalia.watches.v1",insightWatches);renderWatchList();ciStatus(prices.length?(EUR(watch.last)+(watch.last<=watch.target?" ✓":" · "+EUR(watch.target))):t("searchEmpty"));}catch(e){ciStatus(t("searchError"))}return;}
+if(action==="addDiary"){const description=$("ci-diary-description").value.trim(),amount=Number($("ci-diary-cost").value);if(!description||!Number.isFinite(amount)||amount<0)return ciStatus(I("empty"));insightDiary.unshift({description:description.slice(0,140),amount,date:new Date().toISOString().slice(0,10)});insightDiary=insightDiary.slice(0,30);insightStore("costalia.diary.v1",insightDiary);renderDiary();return ciStatus(I("saved"));}
+if(action==="deleteDiary"){insightDiary.splice(idx,1);insightStore("costalia.diary.v1",insightDiary);return renderDiary();}
+if(action==="explain"){const option=$("ci-question").value;const msg=insightAdvice();const answer=$("ci-answer");answer.textContent=option==="why"?"":I("adviceHint");if(option==="why"){const d=allResults(),best=d.reduce((a,b)=>a.total<=b.total?a:b);answer.textContent=I("why")+": "+(best.expense+best.energy>=best.loss?t("running"):t("loss"))+". "+I("adviceHint")}else if(option==="compare"){const r=allResults().map(x=>x.total);answer.textContent=I("difference")+": "+EUR(Math.max(...r)-Math.min(...r))}else{const r=allResults()[0];answer.textContent=I("percent")+": "+Math.round(100*(r.expense+r.energy)/Math.max(1,r.total))+"%."}return;}
+if(action==="listing"){try{const url=new URL($("ci-url").value);if(!["https:","http:"].includes(url.protocol))throw Error("url");let q=decodeURIComponent(url.pathname.split("/").filter(Boolean).pop()||"").replace(/[-_]+/g," ").replace(/\.(html?|php)$/i,"").slice(0,90);if(q.length<3)return ciStatus(I("empty"));$("cs-find").value=q;$("cs-main").scrollIntoView({behavior:"smooth"});ciStatus(I("notKnown"));}catch(e){ciStatus(I("empty"))}return;}
+if(action==="feedback"){const content=$("ci-feedback").value.trim();if(!content)return ciStatus(I("empty"));try{await navigator.clipboard.writeText(content);ciStatus(t("copied"))}catch(e){ciStatus(I("empty"))}}
+}
+
 renderTop();
 })();
