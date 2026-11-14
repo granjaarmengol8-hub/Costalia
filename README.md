@@ -61,3 +61,22 @@ No se usan fuentes externas para deducir consumo, reparaciones, seguro o valor f
 ## Privacidad de búsqueda
 
 Cuando se usa la búsqueda real, el texto introducido se envía al endpoint de Costalia y desde allí a SerpAPI para obtener ofertas. El proveedor de alojamiento y SerpAPI pueden tratar registros técnicos conforme a sus políticas. No introduzcas información personal sensible en el buscador. La política de privacidad debe reflejar este servicio.
+
+## Costalia Insights (millores novembre 2026)
+
+El cercador de productes amb SerpAPI es conserva. A més:
+- **Preu final editable**: enviament, taxes addicionals, instal·lació/gestió i URL de la font tècnica, separats de la compra i del pagament mensual habitual. Les taxes i costos que no es coneixen s'han d'introduir manualment; 0 no significa que s'hagi verificat que són gratuïts.
+- **«Què passa si...?»:** controls de consum/ús, energia i manteniment que recalculen els resultats. Els percentatges s'inclouen en la simulació guardada o compartida.
+- **«És una bona compra?»**: comparació *relativa* dels imports de les alternatives i desglossament de les principals partides. No ofereix una valoració de mercat fiable ni recomana finançament.
+- **Revisions i reparacions**: llista de comprovació genèrica per categoria; no es mostren intervals inventats de fabricants.
+- **Regió**: selector de país o àrea com a referència; els impostos locals no s'autocalculen sense dades verificades.
+- **Seguiment de preus**: desa fins a 15 consultes en localStorage i consulta **manualment** l'API quan l'usuari ho demana. No hi ha comprovacions programades ni correus d'alerta.
+- **Enllaç d'anunci**: extreu paraules de la URL per preparar una cerca; no fa scraping del contingut de l'anunci ni extreu preus.
+- **Foto**: previsualització local sense pujar-la a cap servidor; no hi ha identificació automàtica de producte per imatge.
+- **Experiències de propietaris**: diari privat de despeses realment pagades guardat només al navegador. No hi ha opinions públiques, moderació ni dades comunitàries encara.
+- **Assistent de resultats**: explicació programada a partir de les xifres de la simulació, no és un model d'IA connectat.
+- **Suggeriments**: camp per redactar i copiar suggeriments; no existeix cap backend de recepció.
+
+**Límits de les dades automàtiques:** escollir una oferta pot emplenar nom, preu i font de la botiga. El consum, les revisions, els riscos, el valor residual i la fiscalitat només es poden calcular o suggerir de forma específica si es connecten fonts tècniques fiables. No afirmar que totes les especificacions del producte s'extreuen automàticament.
+
+**Privacitat:** cost personal, seguiments de preus i fotos romanen al navegador; les consultes a SerpAPI envien el text cercat al proveïdor. Completar encara les dades reals de titularitat a l'avís legal.
