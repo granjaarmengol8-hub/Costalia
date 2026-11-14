@@ -70,3 +70,18 @@
 .cs-offer-actions a:hover{text-decoration:underline}
 @media(max-width:800px){.cs-offer-list{grid-template-columns:1fr}}
 @media(max-width:480px){.cs-offer{gap:9px;padding:10px}.cs-offer img{width:68px;height:80px}}
+
+
+/* Costalia insights: quiet editorial UI, accessible touch controls */
+#cs-insights{margin:22px 0}.ci-panel{background:#fff;border:1px solid #dce8df;border-radius:21px;padding:24px;margin-bottom:18px}
+.ci-panel>h2{font-size:25px;letter-spacing:-.6px;margin:0 0 7px}.ci-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px;margin:18px 0}
+.ci-section{background:#f8faf8;border:1px solid #e4ebe5;border-radius:15px;padding:19px;min-width:0}
+.ci-section h3{font-size:17px;margin:0 0 10px;color:#245b4a}.ci-section p,.ci-section li{line-height:1.6;font-size:13px;color:#567266}
+.ci-section ul{padding-left:22px}.ci-section input,.ci-section textarea,.ci-section select{width:100%;max-width:100%;margin:5px 0 10px;padding:11px;border:1px solid #d3e3d7;border-radius:10px;background:white;min-height:43px;font:inherit;color:#25453b}
+.ci-section textarea{min-height:80px}.ci-section button{margin:4px 3px 7px 0}
+.ci-slider{display:block;font-size:13px;color:#466d5d;font-weight:650;margin:15px 0}.ci-slider output{float:right}.ci-slider input[type=range]{width:100%;accent-color:#387e63;min-height:26px;padding:0;border:0;background:transparent}
+.ci-option-extra{border-top:1px solid #e5ede6;margin-top:15px;padding-top:13px}.ci-option-extra summary{cursor:pointer;font-weight:730;font-size:14px;color:#366f57;margin:5px 0 10px}.ci-option-extra .cs-fields{margin-top:10px}
+.ci-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #e5eee7;padding:8px 0;flex-wrap:wrap;font-size:12px;overflow-wrap:anywhere}
+.ci-row span{flex:1;min-width:130px}.ci-row button{padding:6px 10px;font-size:11px}
+@media(max-width:780px){.ci-columns{grid-template-columns:1fr}.ci-panel{padding:17px}}
+@media print{#cs-insights{display:none!important}.ci-option-extra{display:block!important}}
