@@ -62,7 +62,7 @@ if(!validOption(o))throw Error("inputs");
 const factor={low:.85,normal:1,high:1.2}[state.scenario];
 const interest=financing(o,years).interest;
 const onetime=o.expenses.filter(e=>e.frequency==="once").reduce((a,e)=>a+e.amount,0);
-const recurring=o.expenses.filter(e=>e.frequency!=="once").map(e=>({name:e.name,value:e.amount*(e.frequency==="month"?12*years:e.frequency==="year"?years:o.uses*years)*factor*(insightMultiplier.maint||1)}));
+const recurring=o.expenses.filter(e=>e.frequency!=="once").map(e=>({name:e.name,value:e.amount*(e.frequency==="month"?12*years:e.frequency==="year"?years:o.uses*years)*factor*((/manteni|mainten|repar|repair|revision|revisi|neum[aá]|tires|tyres|consumibles|bater[ií]|battery/i.test(e.name))?(insightMultiplier.maint||1):1)}));
 const expense=onetime+recurring.reduce((a,e)=>a+e.value,0);
 const energy=motor(state.cat)?o.km*(insightMultiplier.usage||1)*o.cons/100*o.unitPrice*(insightMultiplier.energy||1)*years*factor:0;
 const residual=state.cat==="home"?o.resale:state.cat==="rental"||state.cat==="subscription"?0:o.price*Math.pow(1-Math.min(100,o.deprec*factor)/100,years);
@@ -133,7 +133,7 @@ const rows=[[t("price"),EUR(o.price)]];
 if(motor(state.cat)){rows.push([t("annual"),String(o.km)]);rows.push([t("cons"),String(o.cons)+" "+(o.method==="electric"?t("unitK"):t("unitL"))]);rows.push([t("fuelPrice"),EUR(o.unitPrice)]);}
 if(state.cat==="home")rows.push([t("residual"),EUR(o.resale)]);
 else if(state.cat!=="rental"&&state.cat!=="subscription")rows.push([t("deprec"),o.deprec+"%"]);
-rows.push([t("down"),EUR(o.down)]);
+rows.push([t("down"),EUR(o.down)]);if(o.extraShipping)rows.push([I("shipping"),EUR(o.extraShipping)]);if(o.extraTax)rows.push([I("tax"),EUR(o.extraTax)]);if(o.extraInstall)rows.push([I("installation"),EUR(o.extraInstall)]);
 if(o.price>o.down){rows.push([t("apr"),o.apr+"%"]);rows.push([t("term"),o.term+" "+t("month")]);}
 o.expenses.forEach(e=>rows.push([e.name,EUR(e.amount)+" · "+t(e.frequency)]));
 return '<div class="cs-option"><h3>'+esc(o.name)+'</h3>'+rows.map(r=>'<div class="cs-row"><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>').join("")+'</div>';
